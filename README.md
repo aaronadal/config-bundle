@@ -39,6 +39,8 @@ After this, you need to register the bundle in your application kernel:
         ];
     }
 
+**NOTE:** Do not forget to place it above the bundles that depend on the dynamically loaded parameters.
+
 ### Configure
 
 You can configure two locations (through [glob patterns](http://php.net/manual/en/function.glob.php)) in which the 
