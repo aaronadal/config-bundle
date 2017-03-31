@@ -3,13 +3,13 @@
 namespace Aaronadal\Tests;
 
 
-use Aaronadal\ConfigBundle\DependencyInjection\LoadConfigCompilerPass;
+use Aaronadal\ConfigBundle\DependencyInjection\AaronadalConfigExtension;
 use Symfony\Component\DependencyInjection\ContainerBuilder;
 
 /**
  * @author Aarón Nadal <aaronadal.dev@gmail.com>
  */
-class LoadConfigCompilerPassTest extends \PHPUnit_Framework_TestCase
+class LoadConfigTest extends \PHPUnit_Framework_TestCase
 {
 
     /**
@@ -18,30 +18,37 @@ class LoadConfigCompilerPassTest extends \PHPUnit_Framework_TestCase
     private $container;
 
     /**
-     * @var LoadConfigCompilerPass
+     * @var AaronadalConfigExtension
      */
-    private $pass;
+    private $extension;
+
+    private $configs;
 
     protected function setUp()
     {
         $this->container = new ContainerBuilder();
-        $this->pass      = new LoadConfigCompilerPass();
+        $this->extension = new \Aaronadal\Tests\Fixtures\AaronadalConfigExtension();
+        $this->configs   = array(
+            'aaronadal_config' => array(
+                'location' => array(
+                    'defaults' => 'Resources/config/defaults/*.yml',
+                    'environment' => 'Resources/config/:env/*.yml',
+                ),
+            ),
+        );
 
+        $this->container->setParameter('kernel.root_dir', __DIR__);
         $this->setEnvironment();
-        $this->container->setParameter('aaronadal.config.location.defaults', __DIR__ . '/assets/defaults/*');
     }
 
     private function setEnvironment($environment = 'none')
     {
-        $this->container->setParameter(
-            'aaronadal.config.location.environment',
-            __DIR__ . '/assets/' . $environment . '/*'
-        );
+        $this->container->setParameter('kernel.environment', $environment);
     }
 
     public function testDefaultParametersAreLoaded()
     {
-        $this->pass->process($this->container);
+        $this->extension->load($this->configs, $this->container);
 
         $this->assertTrue($this->container->hasParameter('only-default'));
         $this->assertSame('only-default', $this->container->getParameter('only-default'));
@@ -56,7 +63,7 @@ class LoadConfigCompilerPassTest extends \PHPUnit_Framework_TestCase
     public function testDevDomainParametersAreLoaded()
     {
         $this->setEnvironment('dev');
-        $this->pass->process($this->container);
+        $this->extension->load($this->configs, $this->container);
 
         $this->assertTrue($this->container->hasParameter('only-dev'));
         $this->assertSame('only-dev', $this->container->getParameter('only-dev'));
@@ -67,7 +74,7 @@ class LoadConfigCompilerPassTest extends \PHPUnit_Framework_TestCase
     public function testProdDomainParametersAreLoaded()
     {
         $this->setEnvironment('prod');
-        $this->pass->process($this->container);
+        $this->extension->load($this->configs, $this->container);
 
         $this->assertFalse($this->container->hasParameter('only-dev'));
 
@@ -78,7 +85,7 @@ class LoadConfigCompilerPassTest extends \PHPUnit_Framework_TestCase
     public function testDefaultParametersAreOverriden()
     {
         $this->setEnvironment('dev');
-        $this->pass->process($this->container);
+        $this->extension->load($this->configs, $this->container);
 
         $this->assertTrue($this->container->hasParameter('overriden'));
         $this->assertSame('dev-overriden', $this->container->getParameter('overriden'));
@@ -86,7 +93,7 @@ class LoadConfigCompilerPassTest extends \PHPUnit_Framework_TestCase
 
     public function testDefaultServicesAreLoaded()
     {
-        $this->pass->process($this->container);
+        $this->extension->load($this->configs, $this->container);
 
         $this->assertTrue($this->container->has('service.default'));
 
@@ -97,7 +104,7 @@ class LoadConfigCompilerPassTest extends \PHPUnit_Framework_TestCase
     public function testDevDomainServicesAreLoaded()
     {
         $this->setEnvironment('dev');
-        $this->pass->process($this->container);
+        $this->extension->load($this->configs, $this->container);
 
         $this->assertTrue($this->container->has('service.dev'));
         $this->assertFalse($this->container->has('service.prod'));
@@ -106,7 +113,7 @@ class LoadConfigCompilerPassTest extends \PHPUnit_Framework_TestCase
     public function testProdDomainServicesAreLoaded()
     {
         $this->setEnvironment('prod');
-        $this->pass->process($this->container);
+        $this->extension->load($this->configs, $this->container);
 
         $this->assertFalse($this->container->has('service.dev'));
         $this->assertTrue($this->container->has('service.prod'));
@@ -114,7 +121,7 @@ class LoadConfigCompilerPassTest extends \PHPUnit_Framework_TestCase
 
     public function testDefaultServicesAreOverriden()
     {
-        $this->pass->process($this->container);
+        $this->extension->load($this->configs, $this->container);
 
         $this->assertTrue($this->container->has('service.overriden'));
         $this->assertSame(
@@ -124,7 +131,7 @@ class LoadConfigCompilerPassTest extends \PHPUnit_Framework_TestCase
 
         $this->setUp();
         $this->setEnvironment('dev');
-        $this->pass->process($this->container);
+        $this->extension->load($this->configs, $this->container);
 
         $this->assertTrue($this->container->has('service.overriden'));
         $this->assertSame(
