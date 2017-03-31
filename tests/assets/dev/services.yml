@@ -1,0 +1,6 @@
+services:
+    service.dev:
+        class: ServiceDevDummyClass
+
+    service.overriden:
+        class: ServiceOverridenDevDummyClass

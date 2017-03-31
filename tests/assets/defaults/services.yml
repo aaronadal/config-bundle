@@ -1,0 +1,6 @@
+services:
+    service.default:
+        class: ServiceDefaultDummyClass
+
+    service.overriden:
+        class: ServiceOverridenDummyClass

@@ -1,0 +1,8 @@
+services:
+    aaronadal.config.twig:
+        class: Aaronadal\ConfigBundle\TwigExtension
+        public: false
+        arguments:
+            - "@=service('service_container').getParameterBag()"
+        tags:
+            - name: twig.extension
